@@ -1,0 +1,10 @@
+# Build Log
+
+## Phase 1 — Design
+AI drafted the initial schema and API contract based on the capstone brief. Chose simple API-key auth over a full OAuth/Supabase flow since the brief's grading focus is public-endpoint hardening, not identity — the design doc records this as an explicit non-goal.
+
+## Phase 2 — Widget management
+AI wrote the CRUD routes. Key review point: every single query (including UPDATE and DELETE, not just SELECT) needed an explicit `AND tenant_id = $N` clause — an early draft only scoped the GET routes, which would have let Tenant B modify Tenant A's widgets by ID even though they couldn't list them. Fixed by auditing every route by hand and adding the tenant_id constraint everywhere, then proving isolation with cross-tenant requests recorded in EVIDENCE.md.
+
+## Phase 3 — Cross-origin proof & dashboard
+Hit a real, instructive CORS bug: attaching `cors()` middleware directly to `app.post('/submissions', cors(), ...)` only applies it when Express actually matches that route+method — but a browser's preflight sends a separate `OPTIONS` request first, which never matches a `POST`-only route, so it never ran through the CORS middleware at all. The browser correctly blocked the real request because the preflight came back with no `Access-Control-Allow-Origin` header. Fixed by explicitly registering `app.options('/submissions', publicCors)` (and the same for the config endpoint) so Express handles the preflight with the same CORS logic. Verified directly with curl simulating the exact preflight headers a browser sends, before trusting the browser UI again — this made the bug unambiguous rather than guessing from browser console noise.

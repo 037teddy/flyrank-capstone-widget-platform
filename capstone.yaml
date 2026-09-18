@@ -1,0 +1,11 @@
+run: docker compose up
+seed: node src/db.js
+base_url: http://localhost:3000
+endpoints:
+  - POST /widgets
+  - GET /widgets
+  - GET /widgets/:id/config
+  - GET /widget.v1.js
+  - POST /submissions
+  - GET /dashboard/submissions
+  - GET /dashboard/stats
